@@ -11,8 +11,8 @@
 
 ## 👤 Identificação Acadêmica
 
-- **Aluno(a):** [PREENCHER: Seu Nome Completo]
-- **RA:** [PREENCHER: Seu Número de RA]
+- **Aluno(a):** [JHENIFER VITORIA ANDRADE CAMARGO]
+- **RA:** [2840482521010]
 - **Curso:** Análise e Desenvolvimento de Sistemas (ADS) — Fatec Ribeirão Preto
 - **Disciplina:** Estrutura de Dados — Prof. Eduardo Cruz Araujo (Semestre 2026.2)
 - **Tema Escolhido:** **Tema A** — Ordenação Dividir-para-Conquistar: *Quick Sort (Pivô Fixo) vs. Merge Sort*
