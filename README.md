@@ -11,7 +11,7 @@
 
 ## 👤 Identificação Acadêmica
 
-- **Aluno(a):** [JHENIFER VITORIA ANDRADE CAMARGO]
+- **Aluno(a):** [Jhenifer Vitoria Andrade Camargo]
 - **RA:** [2840482521010]
 - **Curso:** Análise e Desenvolvimento de Sistemas (ADS) — Fatec Ribeirão Preto
 - **Disciplina:** Estrutura de Dados — Prof. Eduardo Cruz Araujo (Semestre 2026.2)
