@@ -155,4 +155,22 @@ if __name__ == "__main__":
     random.seed(42)
 
     caso_medio: List[int] = random.sample(range(1, 100), 15)
-    run_benchmark_scenario("(a) Caso Médio — Lista Aleatória",
+    run_benchmark_scenario("(a) Caso Médio — Lista Aleatória", caso_medio)
+
+    caso_borda_vazia: List[int] = []
+    run_benchmark_scenario("(b.1) Caso de Borda — Lista Vazia", caso_borda_vazia)
+
+    caso_borda_unitaria: List[int] = [42]
+    run_benchmark_scenario(
+        "(b.2) Caso de Borda — Lista Unitária", caso_borda_unitaria
+    )
+
+    caso_borda_repetidos: List[int] = [7, 3, 7, 1, 3, 7, 1, 3, 7, 1]
+    run_benchmark_scenario(
+        "(b.3) Caso de Borda — Elementos Repetidos", caso_borda_repetidos
+    )
+
+    pior_caso_qs: List[int] = list(range(1, 16))
+    run_benchmark_scenario(
+        "(c) Pior Caso Quick Sort — Lista Já Ordenada (Crescente)", pior_caso_qs
+    )
