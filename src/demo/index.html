@@ -1,1 +1,1975 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simulador Visual: Quick Sort vs. Merge Sort — Estrutura de Dados</title>
+  <style>
+    /* ==========================================================================
+       1. DESIGN TOKENS & VARIÁVEIS DE TEMA (ALTO CONTRASTE / DARK WORKSTATION)
+       ========================================================================== */
+    :root {
+      --bg-app: #080c14;
+      --bg-surface: #0f1624;
+      --bg-surface-elevated: #162033;
+      --bg-input: #0b111d;
+      --border-subtle: rgba(148, 163, 184, 0.16);
+      --border-strong: rgba(148, 163, 184, 0.32);
 
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+
+      /* Código de Cores Didático (Obrigatório) */
+      --color-neutral: #3b82f6;
+      --color-neutral-dark: #1d4ed8;
+      --color-active-scope: #06b6d4;
+      --color-active-scope-bg: rgba(6, 182, 212, 0.14);
+      --color-pivot: #a855f7;
+      --color-pivot-dark: #7e22ce;
+      --color-compare: #f59e0b;
+      --color-compare-dark: #b45309;
+      --color-swap: #f43f5e;
+      --color-swap-dark: #be123c;
+      --color-sorted: #10b981;
+      --color-sorted-dark: #047857;
+
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --shadow-card: 0 10px 28px -6px rgba(0, 0, 0, 0.55);
+      --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+
+    /* ==========================================================================
+       2. RESET E LAYOUT BASE RESPONSIVO
+       ========================================================================== */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-app);
+      background-image:
+        radial-gradient(circle at 15% 0%, rgba(59, 130, 246, 0.09), transparent 38%),
+        radial-gradient(circle at 85% 5%, rgba(168, 85, 247, 0.08), transparent 36%);
+      color: var(--text-primary);
+      line-height: 1.5;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 1rem 1.25rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    /* ==========================================================================
+       3. CABEÇALHO E SELETOR DE ALGORITMOS
+       ========================================================================== */
+    .app-header {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 1rem 1.25rem;
+      box-shadow: var(--shadow-card);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .brand-block {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+
+    .brand-eyebrow {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--color-active-scope);
+    }
+
+    .brand-title {
+      font-size: clamp(1.15rem, 2.2vw, 1.55rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+    }
+
+    .brand-subtitle {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .algo-switcher {
+      display: flex;
+      background: var(--bg-input);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 0.3rem;
+      gap: 0.35rem;
+      flex-wrap: wrap;
+    }
+
+    .algo-tab {
+      appearance: none;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-secondary);
+      font-family: inherit;
+      font-size: 0.88rem;
+      font-weight: 600;
+      padding: 0.6rem 1rem;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.18s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .algo-tab:hover {
+      color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .algo-tab.active[data-algo="quick"] {
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.24), rgba(59, 130, 246, 0.2));
+      border-color: rgba(168, 85, 247, 0.55);
+      color: #f3e8ff;
+      box-shadow: 0 0 16px rgba(168, 85, 247, 0.2);
+    }
+
+    .algo-tab.active[data-algo="merge"] {
+      background: linear-gradient(135deg, rgba(6, 182, 212, 0.24), rgba(16, 185, 129, 0.18));
+      border-color: rgba(6, 182, 212, 0.55);
+      color: #cffafe;
+      box-shadow: 0 0 16px rgba(6, 182, 212, 0.2);
+    }
+
+    .algo-badge {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      padding: 0.12rem 0.4rem;
+      border-radius: 4px;
+      background: rgba(15, 23, 42, 0.75);
+      border: 1px solid var(--border-subtle);
+    }
+
+    /* ==========================================================================
+       4. BARRA DE CONTROLES DE EXECUÇÃO E CENÁRIOS
+       ========================================================================== */
+    .controls-panel {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 0.9rem 1.25rem;
+      box-shadow: var(--shadow-card);
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.9rem;
+    }
+
+    @media (min-width: 1080px) {
+      .controls-panel {
+        grid-template-columns: auto 1fr;
+        align-items: center;
+      }
+    }
+
+    .control-group {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .control-group.scenarios-group {
+      justify-content: flex-start;
+    }
+
+    @media (min-width: 1080px) {
+      .control-group.scenarios-group {
+        justify-content: flex-end;
+        border-left: 1px solid var(--border-subtle);
+        padding-left: 1rem;
+      }
+    }
+
+    .btn {
+      appearance: none;
+      border: 1px solid var(--border-strong);
+      background: var(--bg-surface-elevated);
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 0.84rem;
+      font-weight: 600;
+      padding: 0.58rem 0.85rem;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      transition: transform 0.1s ease, background-color 0.16s ease, border-color 0.16s ease, opacity 0.16s ease;
+      user-select: none;
+      min-height: 38px;
+    }
+
+    .btn:hover:not(:disabled) {
+      background: #1e2b45;
+      border-color: rgba(241, 245, 249, 0.45);
+    }
+
+    .btn:active:not(:disabled) {
+      transform: translateY(1px);
+    }
+
+    .btn:disabled {
+      opacity: 0.42;
+      cursor: not-allowed;
+    }
+
+    .btn-play {
+      background: linear-gradient(135deg, #059669, #10b981);
+      border-color: #34d399;
+      color: #022c22;
+      font-weight: 700;
+    }
+
+    .btn-play:hover:not(:disabled) {
+      background: linear-gradient(135deg, #10b981, #34d399);
+      border-color: #6ee7b7;
+    }
+
+    .btn-pause {
+      background: linear-gradient(135deg, #d97706, #f59e0b);
+      border-color: #fbbf24;
+      color: #1c1002;
+      font-weight: 700;
+    }
+
+    .btn-pause:hover:not(:disabled) {
+      background: linear-gradient(135deg, #f59e0b, #fbbf24);
+    }
+
+    .btn-preset-worst {
+      border-color: rgba(244, 63, 94, 0.45);
+      background: rgba(244, 63, 94, 0.12);
+      color: #fecdd3;
+    }
+
+    .btn-preset-worst:hover:not(:disabled) {
+      background: rgba(244, 63, 94, 0.22);
+      border-color: rgba(244, 63, 94, 0.75);
+    }
+
+    .speed-control {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      background: var(--bg-input);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 0.42rem 0.75rem;
+      min-height: 38px;
+    }
+
+    .speed-control label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    .speed-control input[type="range"] {
+      width: 96px;
+      accent-color: var(--color-active-scope);
+      cursor: pointer;
+    }
+
+    .speed-value {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--color-active-scope);
+      min-width: 54px;
+      text-align: right;
+    }
+
+    .custom-array-form {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+
+    .custom-input {
+      background: var(--bg-input);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      padding: 0.52rem 0.7rem;
+      width: 215px;
+      min-height: 38px;
+      transition: border-color 0.16s ease;
+    }
+
+    .custom-input:focus {
+      outline: none;
+      border-color: var(--color-active-scope);
+      box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.22);
+    }
+
+    .validation-banner {
+      grid-column: 1 / -1;
+      background: rgba(244, 63, 94, 0.14);
+      border: 1px solid rgba(244, 63, 94, 0.48);
+      color: #fecdd3;
+      font-size: 0.82rem;
+      padding: 0.55rem 0.85rem;
+      border-radius: var(--radius-sm);
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    .validation-banner.visible {
+      display: flex;
+    }
+
+    /* ==========================================================================
+       5. GRADE PRINCIPAL (PALCO VISUAL + PAINEL DE MÉTRICAS E LOG)
+       ========================================================================== */
+    .workspace-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+      align-items: start;
+    }
+
+    @media (min-width: 1024px) {
+      .workspace-grid {
+        grid-template-columns: minmax(0, 1.65fr) minmax(340px, 1fr);
+      }
+    }
+
+    .card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 1.1rem 1.25rem;
+      box-shadow: var(--shadow-card);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-bottom: 0.85rem;
+      flex-wrap: wrap;
+    }
+
+    .card-title {
+      font-size: 0.92rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+
+    /* ==========================================================================
+       6. LEGENDA DE CORES DIDÁTICA
+       ========================================================================== */
+    .legend-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+      gap: 0.5rem;
+      padding: 0.75rem;
+      background: var(--bg-input);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      margin-bottom: 1rem;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+    }
+
+    .swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+
+    .swatch-neutral { background: var(--color-neutral); }
+    .swatch-scope {
+      background: rgba(6, 182, 212, 0.35);
+      border: 2px solid var(--color-active-scope);
+    }
+    .swatch-pivot { background: var(--color-pivot); }
+    .swatch-compare { background: var(--color-compare); }
+    .swatch-swap { background: var(--color-swap); }
+    .swatch-sorted { background: var(--color-sorted); }
+
+    /* ==========================================================================
+       7. VISUALIZAÇÃO GRÁFICA DAS BARRAS
+       ========================================================================== */
+    .stage-wrapper {
+      background: var(--bg-input);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 2.25rem 0.9rem 0.85rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .scope-indicator-pill {
+      position: absolute;
+      top: 0.65rem;
+      left: 0.85rem;
+      right: 0.85rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      pointer-events: none;
+      flex-wrap: wrap;
+    }
+
+    .scope-tag {
+      background: rgba(6, 182, 212, 0.14);
+      border: 1px solid rgba(6, 182, 212, 0.4);
+      color: #67e8f9;
+      padding: 0.15rem 0.55rem;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+
+    .bars-stage {
+      height: 310px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      gap: clamp(4px, 0.9vw, 10px);
+      padding-top: 1.5rem;
+      border-bottom: 1px solid var(--border-strong);
+      position: relative;
+    }
+
+    .bar-column {
+      flex: 1 1 0;
+      max-width: 56px;
+      min-width: 14px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
+      position: relative;
+      padding: 0 2px;
+      border-radius: 6px 6px 0 0;
+      transition: background-color 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    /* Destaque do Sub-array ativo na recursão atual */
+    .bar-column.in-active-scope {
+      background: var(--color-active-scope-bg);
+      box-shadow: inset 0 2px 0 var(--color-active-scope);
+    }
+
+    .pointer-badge {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      font-weight: 800;
+      padding: 0.1rem 0.35rem;
+      border-radius: 4px;
+      margin-bottom: 0.3rem;
+      white-space: nowrap;
+      letter-spacing: 0.02em;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid var(--border-strong);
+      color: var(--text-primary);
+      z-index: 2;
+    }
+
+    .pointer-badge.pivot-tag {
+      background: rgba(168, 85, 247, 0.25);
+      border-color: var(--color-pivot);
+      color: #f3e8ff;
+    }
+
+    .bar-rect {
+      width: 100%;
+      min-height: 24px;
+      border-radius: 6px 6px 2px 2px;
+      background: linear-gradient(180deg, var(--color-neutral), var(--color-neutral-dark));
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 0.32rem;
+      transition:
+        height 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+        background 0.16s ease,
+        transform 0.16s ease,
+        box-shadow 0.16s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .bar-value {
+      font-family: var(--font-mono);
+      font-size: clamp(0.66rem, 1.05vw, 0.84rem);
+      font-weight: 800;
+      color: #ffffff;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.75);
+      user-select: none;
+    }
+
+    /* Estados de Cor das Barras */
+    .bar-column.in-active-scope .bar-rect {
+      border-color: var(--color-active-scope);
+      box-shadow: 0 0 10px rgba(6, 182, 212, 0.25);
+    }
+
+    .bar-column.state-sorted .bar-rect {
+      background: linear-gradient(180deg, var(--color-sorted), var(--color-sorted-dark));
+      border-color: #6ee7b7;
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.28);
+    }
+
+    .bar-column.state-pivot .bar-rect {
+      background: linear-gradient(180deg, var(--color-pivot), var(--color-pivot-dark));
+      border-color: #e9d5ff;
+      box-shadow: 0 0 16px rgba(168, 85, 247, 0.5);
+    }
+
+    .bar-column.state-compare .bar-rect {
+      background: linear-gradient(180deg, var(--color-compare), var(--color-compare-dark));
+      border-color: #fef08a;
+      transform: translateY(-4px);
+      box-shadow: 0 6px 16px rgba(245, 158, 11, 0.45);
+    }
+
+    .bar-column.state-swap .bar-rect {
+      background: linear-gradient(180deg, var(--color-swap), var(--color-swap-dark));
+      border-color: #fecdd3;
+      transform: translateY(-6px) scaleX(1.04);
+      box-shadow: 0 8px 20px rgba(244, 63, 94, 0.55);
+    }
+
+    .indices-row {
+      display: flex;
+      justify-content: center;
+      gap: clamp(4px, 0.9vw, 10px);
+      padding-top: 0.45rem;
+    }
+
+    .index-cell {
+      flex: 1 1 0;
+      max-width: 56px;
+      min-width: 14px;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    .index-cell.active-idx {
+      color: var(--color-active-scope);
+      font-weight: 700;
+    }
+
+    /* ==========================================================================
+       8. CAIXA DE EXPLICAÇÃO DO PASSO ATUAL
+       ========================================================================== */
+    .current-step-box {
+      margin-top: 1rem;
+      background: var(--bg-surface-elevated);
+      border-left: 4px solid var(--color-active-scope);
+      border-top: 1px solid var(--border-subtle);
+      border-right: 1px solid var(--border-subtle);
+      border-bottom: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 0.85rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      transition: border-left-color 0.2s ease;
+    }
+
+    .current-step-box[data-action="compare"] { border-left-color: var(--color-compare); }
+    .current-step-box[data-action="swap"],
+    .current-step-box[data-action="write"] { border-left-color: var(--color-swap); }
+    .current-step-box[data-action="partition"] { border-left-color: var(--color-pivot); }
+    .current-step-box[data-action="sorted"],
+    .current-step-box[data-action="done"] { border-left-color: var(--color-sorted); }
+
+    .step-box-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .step-box-text {
+      font-size: 0.92rem;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    /* ==========================================================================
+       9. COLUNA DIREITA: MÉTRICAS, COMPARATIVO ASSINTÓTICO E HISTÓRICO
+       ========================================================================== */
+    .telemetry-column {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.65rem;
+    }
+
+    .metric-tile {
+      background: var(--bg-input);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 0.75rem 0.85rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+
+    .metric-tile.full-span {
+      grid-column: 1 / -1;
+    }
+
+    .metric-label {
+      font-size: 0.74rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .metric-value {
+      font-family: var(--font-mono);
+      font-size: 1.45rem;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      color: var(--text-primary);
+    }
+
+    .metric-value.amber { color: #fbbf24; }
+    .metric-value.coral { color: #fb7185; }
+    .metric-value.cyan { color: #22d3ee; }
+
+    .progress-track {
+      width: 100%;
+      height: 6px;
+      background: rgba(148, 163, 184, 0.15);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 0.35rem;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--color-neutral), var(--color-active-scope), var(--color-sorted));
+      transition: width 0.16s ease;
+    }
+
+    /* Tabela Comparativa Direta (Mesmo Array) */
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.81rem;
+      margin-top: 0.25rem;
+    }
+
+    .comparison-table th,
+    .comparison-table td {
+      padding: 0.5rem 0.55rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .comparison-table th {
+      color: var(--text-secondary);
+      font-weight: 600;
+      font-size: 0.74rem;
+      text-transform: uppercase;
+    }
+
+    .comparison-table td.num {
+      font-family: var(--font-mono);
+      text-align: right;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .comparison-table tr.highlight-row {
+      background: rgba(59, 130, 246, 0.08);
+    }
+
+    /* Resumo Assintótico */
+    .complexity-pills {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.5rem;
+      font-size: 0.8rem;
+    }
+
+    .complexity-item {
+      background: var(--bg-input);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 0.5rem 0.65rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+
+    .complexity-item span:first-child {
+      color: var(--text-secondary);
+      font-size: 0.72rem;
+    }
+
+    .complexity-item strong {
+      font-family: var(--font-mono);
+      color: var(--text-primary);
+      font-size: 0.84rem;
+    }
+
+    /* Histórico de Passos */
+    .history-list {
+      max-height: 250px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      padding-right: 0.25rem;
+    }
+
+    .history-list::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .history-list::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.28);
+      border-radius: 999px;
+    }
+
+    .history-entry {
+      background: var(--bg-input);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 0.48rem 0.65rem;
+      font-size: 0.79rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      cursor: pointer;
+      transition: border-color 0.15s ease, background-color 0.15s ease;
+    }
+
+    .history-entry:hover {
+      border-color: var(--border-strong);
+      background: var(--bg-surface-elevated);
+    }
+
+    .history-entry.current {
+      border-color: var(--color-active-scope);
+      background: rgba(6, 182, 212, 0.1);
+      color: var(--text-primary);
+    }
+
+    .history-step-num {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      min-width: 34px;
+      padding-top: 0.05rem;
+    }
+
+    .history-entry.current .history-step-num {
+      color: var(--color-active-scope);
+    }
+
+    .shortcut-hint {
+      font-size: 0.74rem;
+      color: var(--text-muted);
+      text-align: right;
+    }
+
+    kbd {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      background: var(--bg-input);
+      border: 1px solid var(--border-strong);
+      border-radius: 4px;
+      padding: 0.08rem 0.35rem;
+      color: var(--text-secondary);
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- ======================================================================
+         CABEÇALHO E ALTERNÂNCIA DE ALGORITMOS
+         ====================================================================== -->
+    <header class="app-header">
+      <div class="brand-block">
+        <span class="brand-eyebrow">Estrutura de Dados &amp; Análise de Algoritmos</span>
+        <h1 class="brand-title">Simulador Visual: Quick Sort vs. Merge Sort</h1>
+        <p class="brand-subtitle">
+          Inspeção passo a passo via snapshots pré-gravados sobre exatamente o mesmo conjunto de dados.
+        </p>
+      </div>
+
+      <nav class="algo-switcher" aria-label="Selecionar Algoritmo de Ordenação">
+        <button type="button" class="algo-tab active" data-algo="quick" id="tab-quick">
+          <span>Quick Sort (Pivô Fixo • Lomuto)</span>
+          <span class="algo-badge">Pior: O(n²)</span>
+        </button>
+        <button type="button" class="algo-tab" data-algo="merge" id="tab-merge">
+          <span>Merge Sort (Divisão e Conquista)</span>
+          <span class="algo-badge">Sempre: O(n log n)</span>
+        </button>
+      </nav>
+    </header>
+
+    <!-- ======================================================================
+         CONTROLES DE EXECUÇÃO E CARGA DE CENÁRIOS
+         ====================================================================== -->
+    <section class="controls-panel" aria-label="Controles de Execução e Cenários">
+      <div class="control-group">
+        <button type="button" class="btn btn-play" id="btn-play" title="Executar animação (Espaço)">
+          ▶ Executar
+        </button>
+        <button type="button" class="btn btn-pause" id="btn-pause" disabled title="Pausar animação (Espaço)">
+          ⏸ Pausar
+        </button>
+        <button type="button" class="btn" id="btn-prev" title="Voltar um snapshot (Seta Esquerda)">
+          ⏮ Anterior
+        </button>
+        <button type="button" class="btn" id="btn-step" title="Avançar exatamente uma operação (Seta Direita)">
+          ⏭ Próximo Passo
+        </button>
+        <button type="button" class="btn" id="btn-reset" title="Reiniciar no passo 0">
+          ↺ Reiniciar
+        </button>
+
+        <div class="speed-control">
+          <label for="speed-slider">Velocidade:</label>
+          <input type="range" id="speed-slider" min="40" max="1500" step="10" value="320" />
+          <span class="speed-value" id="speed-label">320 ms</span>
+        </div>
+      </div>
+
+      <div class="control-group scenarios-group">
+        <button type="button" class="btn" id="btn-random">
+          🎲 Caso Aleatório
+        </button>
+        <button type="button" class="btn btn-preset-worst" id="btn-worst">
+          📈 Cenário Pior Caso (Array Ordenado)
+        </button>
+
+        <form class="custom-array-form" id="custom-form" novalidate>
+          <input
+            type="text"
+            id="custom-input"
+            class="custom-input"
+            placeholder="Ex: 45, 12, 89, 33, 7, 64"
+            aria-label="Array Customizado separado por vírgula"
+          />
+          <button type="submit" class="btn">Aplicar Array</button>
+        </form>
+      </div>
+
+      <div class="validation-banner" id="validation-banner" role="alert">
+        <span id="validation-text"></span>
+        <button type="button" class="btn" id="btn-close-validation" style="padding: 0.2rem 0.55rem; min-height: auto;">
+          Fechar
+        </button>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         ÁREA PRINCIPAL: VISUALIZAÇÃO GRÁFICA + TELEMETRIA
+         ====================================================================== -->
+    <main class="workspace-grid">
+      <!-- Coluna Esquerda: Palco Gráfico + Legenda + Explicação -->
+      <section class="card" aria-label="Visualização Gráfica do Array">
+        <div class="card-header">
+          <h2 class="card-title">Representação Visual da Memória</h2>
+          <span class="shortcut-hint">
+            Atalhos: <kbd>Espaço</kbd> Play/Pause • <kbd>←</kbd> <kbd>→</kbd> Passo a passo
+          </span>
+        </div>
+
+        <!-- Código de Cores Didático com Legenda Explícita -->
+        <div class="legend-bar" aria-label="Código de Cores Didático">
+          <div class="legend-item">
+            <span class="swatch swatch-neutral"></span>
+            <span>Não processado / fora do escopo</span>
+          </div>
+          <div class="legend-item">
+            <span class="swatch swatch-scope"></span>
+            <span>Sub-array ativo na recursão</span>
+          </div>
+          <div class="legend-item">
+            <span class="swatch swatch-pivot"></span>
+            <span>Elemento Pivô (Quick Sort)</span>
+          </div>
+          <div class="legend-item">
+            <span class="swatch swatch-compare"></span>
+            <span>Elementos em comparação</span>
+          </div>
+          <div class="legend-item">
+            <span class="swatch swatch-swap"></span>
+            <span>Troca (swap) ou escrita (write)</span>
+          </div>
+          <div class="legend-item">
+            <span class="swatch swatch-sorted"></span>
+            <span>Definitivamente ordenado</span>
+          </div>
+        </div>
+
+        <!-- Gráfico de Barras Proporcionais -->
+        <div class="stage-wrapper">
+          <div class="scope-indicator-pill">
+            <span id="dataset-info">Tamanho do array: n = 14</span>
+            <span class="scope-tag" id="scope-tag">Escopo: [0 .. 13]</span>
+          </div>
+
+          <div class="bars-stage" id="bars-stage" role="img" aria-label="Gráfico de barras do array"></div>
+          <div class="indices-row" id="indices-row"></div>
+        </div>
+
+        <!-- Explicação Detalhada do Passo Atual -->
+        <div class="current-step-box" id="current-step-box" data-action="init">
+          <div class="step-box-label">
+            <span>Operação no Passo Atual</span>
+            <span id="action-badge" style="font-family: var(--font-mono);">INÍCIO</span>
+          </div>
+          <p class="step-box-text" id="current-step-text">
+            Carregando simulação...
+          </p>
+        </div>
+      </section>
+
+      <!-- Coluna Direita: Métricas, Comparação Assintótica e Histórico -->
+      <aside class="telemetry-column">
+        <!-- Métricas em Tempo Real -->
+        <section class="card" aria-label="Métricas de Desempenho em Tempo Real">
+          <div class="card-header">
+            <h2 class="card-title">Métricas em Tempo Real</h2>
+          </div>
+
+          <div class="metrics-grid">
+            <div class="metric-tile full-span">
+              <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                <span class="metric-label">Progresso da Execução</span>
+                <span class="metric-value cyan" id="metric-step" style="font-size: 1.15rem;">
+                  Passo 0 / 0
+                </span>
+              </div>
+              <div class="progress-track">
+                <div class="progress-fill" id="progress-fill"></div>
+              </div>
+            </div>
+
+            <div class="metric-tile">
+              <span class="metric-label">Comparações</span>
+              <span class="metric-value amber" id="metric-comparisons">0</span>
+            </div>
+
+            <div class="metric-tile">
+              <span class="metric-label" id="metric-movements-label">Trocas / Escritas</span>
+              <span class="metric-value coral" id="metric-movements">0</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Comparação Direta sobre o Mesmo Array -->
+        <section class="card" aria-label="Comparativo Completo no Mesmo Array">
+          <div class="card-header">
+            <h2 class="card-title">Balanço Final no Mesmo Array (n = <span id="comp-n">14</span>)</h2>
+          </div>
+
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th>Algoritmo</th>
+                <th style="text-align: right;">Comp.</th>
+                <th style="text-align: right;">Trocas/Escr.</th>
+                <th style="text-align: right;">Total Ops</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr id="row-comp-quick" class="highlight-row">
+                <td>Quick Sort (Pivô Fixo)</td>
+                <td class="num" id="total-qs-comp">-</td>
+                <td class="num" id="total-qs-mov">-</td>
+                <td class="num" id="total-qs-ops">-</td>
+              </tr>
+              <tr id="row-comp-merge">
+                <td>Merge Sort</td>
+                <td class="num" id="total-ms-comp">-</td>
+                <td class="num" id="total-ms-mov">-</td>
+                <td class="num" id="total-ms-ops">-</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <!-- Resumo de Complexidade Assintótica -->
+        <section class="card" aria-label="Complexidade Assintótica">
+          <div class="card-header">
+            <h2 class="card-title">Análise Assintótica (<span id="complexity-algo-name">Quick Sort</span>)</h2>
+          </div>
+          <div class="complexity-pills" id="complexity-pills"></div>
+        </section>
+
+        <!-- Histórico de Passos -->
+        <section class="card" aria-label="Histórico de Passos">
+          <div class="card-header">
+            <h2 class="card-title">Log de Execução (Clique para saltar)</h2>
+          </div>
+          <div class="history-list" id="history-list"></div>
+        </section>
+      </aside>
+    </main>
+  </div>
+
+  <script>
+    /**
+     * ==========================================================================
+     * SIMULADOR VISUAL INTERATIVO: QUICK SORT (LOMUTO) VS. MERGE SORT
+     * Arquitetura baseada em Snapshots Imutáveis Pré-Gravados.
+     * ==========================================================================
+     */
+    (() => {
+      "use strict";
+
+      /* ------------------------------------------------------------------------
+       * 1. METADADOS TEÓRICOS DOS ALGORITMOS
+       * ------------------------------------------------------------------------ */
+      const ALGO_INFO = {
+        quick: {
+          name: "Quick Sort (Lomuto)",
+          movementsLabel: "Trocas (Swaps)",
+          best: "Θ(n log n)",
+          average: "Θ(n log n)",
+          worst: "O(n²) — Array ordenado",
+          space: "O(log n) a O(n) pilha",
+          stable: "Não estável (in-place)"
+        },
+        merge: {
+          name: "Merge Sort",
+          movementsLabel: "Escritas (Writes)",
+          best: "Θ(n log n)",
+          average: "Θ(n log n)",
+          worst: "Θ(n log n) garantido",
+          space: "O(n) memória auxiliar",
+          stable: "Estável (≤ na intercalação)"
+        }
+      };
+
+      /* ------------------------------------------------------------------------
+       * 2. ESTADO GLOBAL DA APLICAÇÃO
+       * ------------------------------------------------------------------------ */
+      const state = {
+        baseArray: [],           // Array original imutável preservado entre alternâncias
+        currentAlgo: "quick",    // "quick" | "merge"
+        snapshots: [],           // Lista de snapshots do algoritmo ativo
+        totalsByAlgo: {          // Métricas totais pré-calculadas para comparação direta
+          quick: { comparisons: 0, movements: 0 },
+          merge: { comparisons: 0, movements: 0 }
+        },
+        currentStep: 0,
+        isPlaying: false,
+        speedMs: 320,
+        timerId: null
+      };
+
+      /* ------------------------------------------------------------------------
+       * 3. REFERÊNCIAS DO DOM
+       * ------------------------------------------------------------------------ */
+      const dom = {
+        tabQuick: document.getElementById("tab-quick"),
+        tabMerge: document.getElementById("tab-merge"),
+        btnPlay: document.getElementById("btn-play"),
+        btnPause: document.getElementById("btn-pause"),
+        btnPrev: document.getElementById("btn-prev"),
+        btnStep: document.getElementById("btn-step"),
+        btnReset: document.getElementById("btn-reset"),
+        speedSlider: document.getElementById("speed-slider"),
+        speedLabel: document.getElementById("speed-label"),
+        btnRandom: document.getElementById("btn-random"),
+        btnWorst: document.getElementById("btn-worst"),
+        customForm: document.getElementById("custom-form"),
+        customInput: document.getElementById("custom-input"),
+        validationBanner: document.getElementById("validation-banner"),
+        validationText: document.getElementById("validation-text"),
+        btnCloseValidation: document.getElementById("btn-close-validation"),
+        barsStage: document.getElementById("bars-stage"),
+        indicesRow: document.getElementById("indices-row"),
+        datasetInfo: document.getElementById("dataset-info"),
+        scopeTag: document.getElementById("scope-tag"),
+        currentStepBox: document.getElementById("current-step-box"),
+        actionBadge: document.getElementById("action-badge"),
+        currentStepText: document.getElementById("current-step-text"),
+        metricStep: document.getElementById("metric-step"),
+        progressFill: document.getElementById("progress-fill"),
+        metricComparisons: document.getElementById("metric-comparisons"),
+        metricMovementsLabel: document.getElementById("metric-movements-label"),
+        metricMovements: document.getElementById("metric-movements"),
+        compN: document.getElementById("comp-n"),
+        rowCompQuick: document.getElementById("row-comp-quick"),
+        rowCompMerge: document.getElementById("row-comp-merge"),
+        totalQsComp: document.getElementById("total-qs-comp"),
+        totalQsMov: document.getElementById("total-qs-mov"),
+        totalQsOps: document.getElementById("total-qs-ops"),
+        totalMsComp: document.getElementById("total-ms-comp"),
+        totalMsMov: document.getElementById("total-ms-mov"),
+        totalMsOps: document.getElementById("total-ms-ops"),
+        complexityAlgoName: document.getElementById("complexity-algo-name"),
+        complexityPills: document.getElementById("complexity-pills"),
+        historyList: document.getElementById("history-list")
+      };
+
+      /* ------------------------------------------------------------------------
+       * 4. GERADOR DE SNAPSHOTS: QUICK SORT (PIVÔ FIXO À DIREITA - LOMUTO)
+       * ------------------------------------------------------------------------ */
+      function recordQuickSortSnapshots(inputArray) {
+        const arr = [...inputArray];
+        const n = arr.length;
+        const snapshots = [];
+        const sortedIndices = new Set();
+        let comparisons = 0;
+        let movements = 0;
+
+        const pushSnapshot = ({
+          activeRange = null,
+          pivotIndex = null,
+          comparing = [],
+          swapping = [],
+          pointers = {},
+          actionType = "partition",
+          message = ""
+        }) => {
+          snapshots.push({
+            array: [...arr],
+            activeRange,
+            pivotIndex,
+            comparing: [...comparing],
+            swapping: [...swapping],
+            sorted: Array.from(sortedIndices),
+            pointers: { ...pointers },
+            comparisons,
+            movements,
+            actionType,
+            message
+          });
+        };
+
+        pushSnapshot({
+          activeRange: n > 0 ? [0, n - 1] : null,
+          actionType: "init",
+          message: `Estado inicial com ${n} elementos: [${arr.join(", ")}]. Pronto para iniciar o Quick Sort com pivô fixo no último elemento (particionamento de Lomuto).`
+        });
+
+        function quickSortRecursive(low, high) {
+          if (low > high) return;
+
+          if (low === high) {
+            sortedIndices.add(low);
+            pushSnapshot({
+              activeRange: [low, high],
+              actionType: "sorted",
+              message: `Caso base no índice [${low}] (valor ${arr[low]}): sub-array unitário já está em sua posição definitiva.`
+            });
+            return;
+          }
+
+          const pivotVal = arr[high];
+          pushSnapshot({
+            activeRange: [low, high],
+            pivotIndex: high,
+            pointers: { [high]: "Pivô", [low]: "j" },
+            actionType: "partition",
+            message: `Particionando sub-array [${low}..${high}]. Pivô fixo selecionado no último índice [${high}] com valor ${pivotVal}.`
+          });
+
+          let i = low - 1;
+
+          for (let j = low; j < high; j++) {
+            comparisons++;
+            const isLessOrEqual = arr[j] <= pivotVal;
+
+            const ptrsCompare = { [high]: "Pivô", [j]: "j" };
+            if (i >= low) ptrsCompare[i] = i === j ? "i,j" : "i";
+
+            pushSnapshot({
+              activeRange: [low, high],
+              pivotIndex: high,
+              comparing: [j, high],
+              pointers: ptrsCompare,
+              actionType: "compare",
+              message: `Comparando arr[${j}] (${arr[j]}) com o pivô arr[${high}] (${pivotVal}): ${
+                isLessOrEqual
+                  ? `${arr[j]} ≤ ${pivotVal} (pertence à partição esquerda).`
+                  : `${arr[j]} > ${pivotVal} (permanece à direita).`
+              }`
+            });
+
+            if (isLessOrEqual) {
+              i++;
+              if (i !== j) {
+                const valI = arr[i];
+                const valJ = arr[j];
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+                movements++;
+
+                pushSnapshot({
+                  activeRange: [low, high],
+                  pivotIndex: high,
+                  swapping: [i, j],
+                  pointers: { [high]: "Pivô", [i]: "i", [j]: "j" },
+                  actionType: "swap",
+                  message: `Troca (swap): deslocando ${valJ} (de [${j}]) para a fronteira dos menores em [${i}] (trocado com ${valI}).`
+                });
+              } else {
+                pushSnapshot({
+                  activeRange: [low, high],
+                  pivotIndex: high,
+                  pointers: { [high]: "Pivô", [i]: "i=j" },
+                  actionType: "partition",
+                  message: `Índice i avançou para [${i}]. Como i == j (${arr[i]} ≤ ${pivotVal}), o elemento já está na região esquerda sem troca física.`
+                });
+              }
+            }
+          }
+
+          const pivotFinalIdx = i + 1;
+          if (pivotFinalIdx !== high) {
+            const displacedVal = arr[pivotFinalIdx];
+            [arr[pivotFinalIdx], arr[high]] = [arr[high], arr[pivotFinalIdx]];
+            movements++;
+            sortedIndices.add(pivotFinalIdx);
+
+            pushSnapshot({
+              activeRange: [low, high],
+              swapping: [pivotFinalIdx, high],
+              pointers: { [pivotFinalIdx]: "Pivô" },
+              actionType: "swap",
+              message: `Posicionando o pivô (${pivotVal}) em seu índice definitivo [${pivotFinalIdx}], trocando-o com arr[${high}] (${displacedVal}).`
+            });
+          } else {
+            sortedIndices.add(high);
+            pushSnapshot({
+              activeRange: [low, high],
+              pointers: { [high]: "Pivô" },
+              actionType: "sorted",
+              message: `O pivô (${pivotVal}) já é o maior elemento do sub-array [${low}..${high}] e permanece definitivamente no índice [${high}].`
+            });
+          }
+
+          quickSortRecursive(low, pivotFinalIdx - 1);
+          quickSortRecursive(pivotFinalIdx + 1, high);
+        }
+
+        if (n > 1) {
+          quickSortRecursive(0, n - 1);
+        } else if (n === 1) {
+          sortedIndices.add(0);
+        }
+
+        for (let idx = 0; idx < n; idx++) sortedIndices.add(idx);
+
+        pushSnapshot({
+          activeRange: null,
+          actionType: "done",
+          message: `Quick Sort concluído! Array ordenado: [${arr.join(", ")}]. Total: ${comparisons} comparações e ${movements} trocas.`
+        });
+
+        return {
+          snapshots,
+          totals: { comparisons, movements }
+        };
+      }
+
+      /* ------------------------------------------------------------------------
+       * 5. GERADOR DE SNAPSHOTS: MERGE SORT (DIVISÃO E CONQUISTA ESTÁVEL)
+       * ------------------------------------------------------------------------ */
+      function recordMergeSortSnapshots(inputArray) {
+        const arr = [...inputArray];
+        const n = arr.length;
+        const snapshots = [];
+        const sortedIndices = new Set();
+        let comparisons = 0;
+        let movements = 0;
+
+        const pushSnapshot = ({
+          activeRange = null,
+          comparing = [],
+          swapping = [],
+          pointers = {},
+          actionType = "divide",
+          message = ""
+        }) => {
+          snapshots.push({
+            array: [...arr],
+            activeRange,
+            pivotIndex: null,
+            comparing: [...comparing],
+            swapping: [...swapping],
+            sorted: Array.from(sortedIndices),
+            pointers: { ...pointers },
+            comparisons,
+            movements,
+            actionType,
+            message
+          });
+        };
+
+        pushSnapshot({
+          activeRange: n > 0 ? [0, n - 1] : null,
+          actionType: "init",
+          message: `Estado inicial com ${n} elementos: [${arr.join(", ")}]. Pronto para iniciar o Merge Sort (divisão recursiva e intercalação ordenada).`
+        });
+
+        function mergeSortRecursive(left, right) {
+          if (left >= right) return;
+
+          const mid = left + Math.floor((right - left) / 2);
+
+          pushSnapshot({
+            activeRange: [left, right],
+            pointers: { [left]: "L", [mid]: "M", [right]: "R" },
+            actionType: "divide",
+            message: `Dividindo sub-array [${left}..${right}] ao meio: metade esquerda [${left}..${mid}] e metade direita [${mid + 1}..${right}].`
+          });
+
+          mergeSortRecursive(left, mid);
+          mergeSortRecursive(mid + 1, right);
+          mergeSegments(left, mid, right);
+        }
+
+        function mergeSegments(left, mid, right) {
+          const leftPart = arr.slice(left, mid + 1);
+          const rightPart = arr.slice(mid + 1, right + 1);
+          const isFinalMerge = left === 0 && right === n - 1;
+
+          pushSnapshot({
+            activeRange: [left, right],
+            pointers: { [left]: "k" },
+            actionType: "divide",
+            message: `Intercalando (merge) [${left}..${mid}] = [${leftPart.join(", ")}] e [${mid + 1}..${right}] = [${rightPart.join(", ")}].`
+          });
+
+          let i = 0;
+          let j = 0;
+          let k = left;
+
+          while (i < leftPart.length && j < rightPart.length) {
+            comparisons++;
+            const leftVal = leftPart[i];
+            const rightVal = rightPart[j];
+            const takeLeft = leftVal <= rightVal;
+
+            // Índices visuais representativos da comparação atual
+            const idxLeftVisual = Math.max(k, left + i);
+            const idxRightVisual = mid + 1 + j;
+            const comparePair =
+              idxLeftVisual !== idxRightVisual
+                ? [idxLeftVisual, idxRightVisual]
+                : [idxRightVisual];
+
+            pushSnapshot({
+              activeRange: [left, right],
+              comparing: comparePair,
+              pointers: { [k]: "k" },
+              actionType: "compare",
+              message: `Comparando esquerda[${i}] (${leftVal}) com direita[${j}] (${rightVal}): ${
+                takeLeft
+                  ? `${leftVal} ≤ ${rightVal} (seleciona da metade esquerda).`
+                  : `${leftVal} > ${rightVal} (seleciona da metade direita).`
+              }`
+            });
+
+            if (takeLeft) {
+              arr[k] = leftVal;
+              i++;
+            } else {
+              arr[k] = rightVal;
+              j++;
+            }
+            movements++;
+            if (isFinalMerge) sortedIndices.add(k);
+
+            pushSnapshot({
+              activeRange: [left, right],
+              swapping: [k],
+              pointers: { [k]: "k" },
+              actionType: "write",
+              message: `Escrita na memória: gravando ${arr[k]} na posição arr[${k}] (vindo da metade ${
+                takeLeft ? "esquerda" : "direita"
+              }).`
+            });
+
+            k++;
+          }
+
+          while (i < leftPart.length) {
+            arr[k] = leftPart[i];
+            movements++;
+            if (isFinalMerge) sortedIndices.add(k);
+
+            pushSnapshot({
+              activeRange: [left, right],
+              swapping: [k],
+              pointers: { [k]: "k" },
+              actionType: "write",
+              message: `Copiando restante da metade esquerda: gravando ${leftPart[i]} em arr[${k}].`
+            });
+
+            i++;
+            k++;
+          }
+
+          while (j < rightPart.length) {
+            arr[k] = rightPart[j];
+            movements++;
+            if (isFinalMerge) sortedIndices.add(k);
+
+            pushSnapshot({
+              activeRange: [left, right],
+              swapping: [k],
+              pointers: { [k]: "k" },
+              actionType: "write",
+              message: `Copiando restante da metade direita: gravando ${rightPart[j]} em arr[${k}].`
+            });
+
+            j++;
+            k++;
+          }
+
+          if (!isFinalMerge) {
+            pushSnapshot({
+              activeRange: [left, right],
+              actionType: "partition",
+              message: `Sub-array [${left}..${right}] intercalado e localmente ordenado: [${arr
+                .slice(left, right + 1)
+                .join(", ")}].`
+            });
+          }
+        }
+
+        if (n > 1) {
+          mergeSortRecursive(0, n - 1);
+        }
+
+        for (let idx = 0; idx < n; idx++) sortedIndices.add(idx);
+
+        pushSnapshot({
+          activeRange: null,
+          actionType: "done",
+          message: `Merge Sort concluído! Array ordenado de forma estável: [${arr.join(", ")}]. Total: ${comparisons} comparações e ${movements} escritas.`
+        });
+
+        return {
+          snapshots,
+          totals: { comparisons, movements }
+        };
+      }
+
+      /* ------------------------------------------------------------------------
+       * 6. GERENCIAMENTO DE DADOS, CENÁRIOS E CONTROLES DE REPRODUÇÃO
+       * ------------------------------------------------------------------------ */
+      function generateRandomArray(size = 14) {
+        const result = [];
+        for (let i = 0; i < size; i++) {
+          result.push(Math.floor(Math.random() * 88) + 10); // Valores entre 10 e 97
+        }
+        return result;
+      }
+
+      function generateWorstCaseSortedArray(size = 14) {
+        // Array estritamente crescente: provoca n*(n-1)/2 comparações no Quick Sort com pivô fixo
+        return Array.from({ length: size }, (_, idx) => 12 + idx * 6);
+      }
+
+      function loadDataset(newArray) {
+        pausePlayback();
+        clearValidationError();
+        state.baseArray = [...newArray];
+
+        // Pré-grava ambos para exibir a comparação direta lado a lado
+        const quickResult = recordQuickSortSnapshots(state.baseArray);
+        const mergeResult = recordMergeSortSnapshots(state.baseArray);
+
+        state.totalsByAlgo.quick = quickResult.totals;
+        state.totalsByAlgo.merge = mergeResult.totals;
+
+        state.snapshots =
+          state.currentAlgo === "quick" ? quickResult.snapshots : mergeResult.snapshots;
+        state.currentStep = 0;
+
+        updateComparisonSummaryTable();
+        rebuildHistoryList();
+        renderCurrentSnapshot();
+      }
+
+      function switchAlgorithm(algoKey) {
+        if (state.currentAlgo === algoKey) return;
+        pausePlayback();
+        state.currentAlgo = algoKey;
+
+        dom.tabQuick.classList.toggle("active", algoKey === "quick");
+        dom.tabMerge.classList.toggle("active", algoKey === "merge");
+
+        const recorded =
+          algoKey === "quick"
+            ? recordQuickSortSnapshots(state.baseArray)
+            : recordMergeSortSnapshots(state.baseArray);
+
+        state.snapshots = recorded.snapshots;
+        state.currentStep = 0;
+
+        updateComplexityCard();
+        updateComparisonSummaryTable();
+        rebuildHistoryList();
+        renderCurrentSnapshot();
+      }
+
+      function startPlayback() {
+        if (state.isPlaying) return;
+        if (state.currentStep >= state.snapshots.length - 1) {
+          state.currentStep = 0;
+        }
+        state.isPlaying = true;
+        updateControlButtons();
+
+        const tick = () => {
+          if (!state.isPlaying) return;
+          if (state.currentStep < state.snapshots.length - 1) {
+            state.currentStep++;
+            renderCurrentSnapshot();
+            state.timerId = setTimeout(tick, state.speedMs);
+          } else {
+            pausePlayback();
+          }
+        };
+
+        state.timerId = setTimeout(tick, state.speedMs);
+      }
+
+      function pausePlayback() {
+        state.isPlaying = false;
+        if (state.timerId !== null) {
+          clearTimeout(state.timerId);
+          state.timerId = null;
+        }
+        updateControlButtons();
+      }
+
+      function stepForward() {
+        pausePlayback();
+        if (state.currentStep < state.snapshots.length - 1) {
+          state.currentStep++;
+          renderCurrentSnapshot();
+        }
+      }
+
+      function stepBackward() {
+        pausePlayback();
+        if (state.currentStep > 0) {
+          state.currentStep--;
+          renderCurrentSnapshot();
+        }
+      }
+
+      function resetSimulation() {
+        pausePlayback();
+        state.currentStep = 0;
+        renderCurrentSnapshot();
+      }
+
+      function jumpToStep(stepIndex) {
+        pausePlayback();
+        if (stepIndex >= 0 && stepIndex < state.snapshots.length) {
+          state.currentStep = stepIndex;
+          renderCurrentSnapshot();
+        }
+      }
+
+      /* ------------------------------------------------------------------------
+       * 7. RENDERIZAÇÃO DA INTERFACE (BARRAS, MÉTRICAS, LOGS E TABELAS)
+       * ------------------------------------------------------------------------ */
+      function renderCurrentSnapshot() {
+        const snap = state.snapshots[state.currentStep];
+        if (!snap) return;
+
+        const arr = snap.array;
+        const n = arr.length;
+        const maxVal = n > 0 ? Math.max(...arr, 1) : 1;
+
+        const sortedSet = new Set(snap.sorted);
+        const compareSet = new Set(snap.comparing);
+        const swapSet = new Set(snap.swapping);
+
+        // Atualiza cabeçalho do palco
+        dom.datasetInfo.textContent = `Tamanho do array: n = ${n}`;
+        if (snap.activeRange) {
+          dom.scopeTag.textContent = `Sub-array ativo: [${snap.activeRange[0]} .. ${snap.activeRange[1]}]`;
+          dom.scopeTag.style.opacity = "1";
+        } else {
+          dom.scopeTag.textContent =
+            snap.actionType === "done" ? "Ordenação concluída" : "Escopo completo";
+          dom.scopeTag.style.opacity = "0.75";
+        }
+
+        // Renderiza barras verticais proporcionais e índices
+        const barsFragment = document.createDocumentFragment();
+        const indicesFragment = document.createDocumentFragment();
+
+        for (let idx = 0; idx < n; idx++) {
+          const val = arr[idx];
+          const heightPct = Math.max(10, Math.round((val / maxVal) * 86));
+
+          const col = document.createElement("div");
+          col.className = "bar-column";
+
+          const inScope =
+            snap.activeRange &&
+            idx >= snap.activeRange[0] &&
+            idx <= snap.activeRange[1];
+          if (inScope) col.classList.add("in-active-scope");
+
+          // Prioridade visual didática: Troca/Escrita > Comparação > Pivô > Ordenado > Neutro
+          if (swapSet.has(idx)) {
+            col.classList.add("state-swap");
+          } else if (compareSet.has(idx)) {
+            col.classList.add("state-compare");
+          } else if (snap.pivotIndex === idx) {
+            col.classList.add("state-pivot");
+          } else if (sortedSet.has(idx)) {
+            col.classList.add("state-sorted");
+          }
+
+          // Etiqueta de ponteiro acima da barra (Pivô, i, j, k, L, M, R)
+          if (snap.pointers && snap.pointers[idx]) {
+            const badge = document.createElement("span");
+            badge.className = "pointer-badge";
+            if (snap.pointers[idx].includes("Pivô")) {
+              badge.classList.add("pivot-tag");
+            }
+            badge.textContent = snap.pointers[idx];
+            col.appendChild(badge);
+          }
+
+          const rect = document.createElement("div");
+          rect.className = "bar-rect";
+          rect.style.height = `${heightPct}%`;
+
+          const valueLabel = document.createElement("span");
+          valueLabel.className = "bar-value";
+          valueLabel.textContent = String(val);
+          rect.appendChild(valueLabel);
+
+          col.appendChild(rect);
+          barsFragment.appendChild(col);
+
+          // Célula de índice alinhada abaixo da linha de base
+          const idxCell = document.createElement("div");
+          idxCell.className = "index-cell" + (inScope ? " active-idx" : "");
+          idxCell.textContent = `[${idx}]`;
+          indicesFragment.appendChild(idxCell);
+        }
+
+        dom.barsStage.innerHTML = "";
+        dom.barsStage.appendChild(barsFragment);
+
+        dom.indicesRow.innerHTML = "";
+        dom.indicesRow.appendChild(indicesFragment);
+
+        // Atualiza caixa de explicação do passo atual
+        const actionLabels = {
+          init: "INÍCIO",
+          partition: "PARTIÇÃO",
+          divide: "DIVISÃO / MERGE",
+          compare: "COMPARAÇÃO",
+          swap: "TROCA (SWAP)",
+          write: "ESCRITA (MEMÓRIA)",
+          sorted: "POSIÇÃO DEFINITIVA",
+          done: "CONCLUÍDO"
+        };
+
+        dom.currentStepBox.dataset.action = snap.actionType;
+        dom.actionBadge.textContent = actionLabels[snap.actionType] || "PASSO";
+        dom.currentStepText.textContent = snap.message;
+
+        // Atualiza contadores em tempo real
+        const totalSteps = Math.max(0, state.snapshots.length - 1);
+        dom.metricStep.textContent = `Passo ${state.currentStep} / ${totalSteps}`;
+        const pct = totalSteps > 0 ? (state.currentStep / totalSteps) * 100 : 100;
+        dom.progressFill.style.width = `${pct}%`;
+
+        dom.metricComparisons.textContent = String(snap.comparisons);
+        dom.metricMovements.textContent = String(snap.movements);
+        dom.metricMovementsLabel.textContent = ALGO_INFO[state.currentAlgo].movementsLabel;
+
+        // Sincroniza destaque no histórico de passos
+        highlightCurrentHistoryEntry();
+        updateControlButtons();
+      }
+
+      function updateControlButtons() {
+        const atStart = state.currentStep === 0;
+        const atEnd = state.currentStep >= state.snapshots.length - 1;
+
+        dom.btnPlay.disabled = state.isPlaying || atEnd;
+        dom.btnPause.disabled = !state.isPlaying;
+        dom.btnPrev.disabled = atStart;
+        dom.btnStep.disabled = atEnd;
+        dom.btnReset.disabled = atStart && !state.isPlaying;
+      }
+
+      function updateComparisonSummaryTable() {
+        const n = state.baseArray.length;
+        const qs = state.totalsByAlgo.quick;
+        const ms = state.totalsByAlgo.merge;
+
+        dom.compN.textContent = String(n);
+
+        dom.totalQsComp.textContent = String(qs.comparisons);
+        dom.totalQsMov.textContent = String(qs.movements);
+        dom.totalQsOps.textContent = String(qs.comparisons + qs.movements);
+
+        dom.totalMsComp.textContent = String(ms.comparisons);
+        dom.totalMsMov.textContent = String(ms.movements);
+        dom.totalMsOps.textContent = String(ms.comparisons + ms.movements);
+
+        dom.rowCompQuick.classList.toggle("highlight-row", state.currentAlgo === "quick");
+        dom.rowCompMerge.classList.toggle("highlight-row", state.currentAlgo === "merge");
+      }
+
+      function updateComplexityCard() {
+        const info = ALGO_INFO[state.currentAlgo];
+        dom.complexityAlgoName.textContent = info.name;
+        dom.complexityPills.innerHTML = `
+          <div class="complexity-item">
+            <span>Melhor Caso</span>
+            <strong>${info.best}</strong>
+          </div>
+          <div class="complexity-item">
+            <span>Caso Médio</span>
+            <strong>${info.average}</strong>
+          </div>
+          <div class="complexity-item">
+            <span>Pior Caso</span>
+            <strong>${info.worst}</strong>
+          </div>
+          <div class="complexity-item">
+            <span>Espaço / Estabilidade</span>
+            <strong>${info.space}</strong>
+          </div>
+        `;
+      }
+
+      function rebuildHistoryList() {
+        const fragment = document.createDocumentFragment();
+        state.snapshots.forEach((snap, idx) => {
+          const entry = document.createElement("div");
+          entry.className = "history-entry";
+          entry.dataset.step = String(idx);
+
+          const num = document.createElement("span");
+          num.className = "history-step-num";
+          num.textContent = `#${idx}`;
+
+          const msg = document.createElement("span");
+          msg.textContent = snap.message;
+
+          entry.appendChild(num);
+          entry.appendChild(msg);
+          entry.addEventListener("click", () => jumpToStep(idx));
+
+          fragment.appendChild(entry);
+        });
+
+        dom.historyList.innerHTML = "";
+        dom.historyList.appendChild(fragment);
+      }
+
+      function highlightCurrentHistoryEntry() {
+        const entries = dom.historyList.querySelectorAll(".history-entry");
+        entries.forEach((el, idx) => {
+          const isCurrent = idx === state.currentStep;
+          el.classList.toggle("current", isCurrent);
+          if (isCurrent) {
+            el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+          }
+        });
+      }
+
+      /* ------------------------------------------------------------------------
+       * 8. VALIDAÇÃO DE INPUT CUSTOMIZADO E EVENT LISTENERS
+       * ------------------------------------------------------------------------ */
+      function showValidationError(message) {
+        dom.validationText.textContent = message;
+        dom.validationBanner.classList.add("visible");
+      }
+
+      function clearValidationError() {
+        dom.validationBanner.classList.remove("visible");
+        dom.validationText.textContent = "";
+      }
+
+      function parseAndValidateCustomInput(rawText) {
+        const cleaned = rawText.trim();
+        if (!cleaned) {
+          return { ok: false, error: "Digite entre 2 e 28 números inteiros separados por vírgula (ex: 45, 12, 89, 33, 7, 64)." };
+        }
+
+        const tokens = cleaned
+          .split(/[\s,;]+/)
+          .filter((token) => token.length > 0);
+
+        if (tokens.length < 2 || tokens.length > 28) {
+          return {
+            ok: false,
+            error: `Informe entre 2 e 28 elementos para uma visualização clara (você informou ${tokens.length}).`
+          };
+        }
+
+        const parsedNumbers = [];
+        for (const token of tokens) {
+          if (!/^-?\d+$/.test(token)) {
+            return {
+              ok: false,
+              error: `Valor inválido encontrado: "${token}". Utilize apenas números inteiros.`
+            };
+          }
+          const num = Number(token);
+          if (num < 1 || num > 999) {
+            return {
+              ok: false,
+              error: `O valor ${num} está fora do intervalo permitido (1 a 999) para proporção gráfica das barras.`
+            };
+          }
+          parsedNumbers.push(num);
+        }
+
+        return { ok: true, values: parsedNumbers };
+      }
+
+      // Listeners de Alternância de Algoritmo
+      dom.tabQuick.addEventListener("click", () => switchAlgorithm("quick"));
+      dom.tabMerge.addEventListener("click", () => switchAlgorithm("merge"));
+
+      // Listeners de Controle de Reprodução
+      dom.btnPlay.addEventListener("click", startPlayback);
+      dom.btnPause.addEventListener("click", pausePlayback);
+      dom.btnPrev.addEventListener("click", stepBackward);
+      dom.btnStep.addEventListener("click", stepForward);
+      dom.btnReset.addEventListener("click", resetSimulation);
+
+      dom.speedSlider.addEventListener("input", (e) => {
+        state.speedMs = Number(e.target.value);
+        dom.speedLabel.textContent = `${state.speedMs} ms`;
+      });
+
+      // Listeners de Cenários Rápidos e Array Customizado
+      dom.btnRandom.addEventListener("click", () => {
+        loadDataset(generateRandomArray(14));
+      });
+
+      dom.btnWorst.addEventListener("click", () => {
+        loadDataset(generateWorstCaseSortedArray(14));
+      });
+
+      dom.customForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const result = parseAndValidateCustomInput(dom.customInput.value);
+        if (!result.ok) {
+          showValidationError(result.error);
+          return;
+        }
+        loadDataset(result.values);
+      });
+
+      dom.btnCloseValidation.addEventListener("click", clearValidationError);
+
+      // Atalhos de Teclado para Apresentação em Sala de Aula
+      document.addEventListener("keydown", (e) => {
+        if (document.activeElement === dom.customInput) return;
+
+        if (e.code === "Space") {
+          e.preventDefault();
+          if (state.isPlaying) {
+            pausePlayback();
+          } else {
+            startPlayback();
+          }
+        } else if (e.code === "ArrowRight") {
+          e.preventDefault();
+          stepForward();
+        } else if (e.code === "ArrowLeft") {
+          e.preventDefault();
+          stepBackward();
+        }
+      });
+
+      /* ------------------------------------------------------------------------
+       * 9. INICIALIZAÇÃO DA APLICAÇÃO
+       * ------------------------------------------------------------------------ */
+      updateComplexityCard();
+      loadDataset(generateRandomArray(14));
+    })();
+  </script>
+</body>
+</html>
