@@ -5,7 +5,7 @@
 ![Dependências](https://img.shields.io/badge/Depend%C3%AAncias-Zero%20(Python%20Puro)-2EA44F?style=flat-square)
 ![Fatec](https://img.shields.io/badge/Fatec%20Ribeir%C3%A3o%20Preto-ADS%202026.2-B91C1C?style=flat-square)
 
-> **🎥 Vídeo Explicativo de Defesa Técnica:** [https://youtu.be/LHSrSUEhlSs?si=-Jj9xqdaAuTwrSDV]
+> **🎥 Vídeo Explicativo de Defesa Técnica:** [https://youtu.be/kIcWfDlGvCw]
 
 ---
 
